@@ -1,0 +1,980 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Financial Statement Visualization API",
+    "description": "REST API for accessing financial statement data from SEC filings. Provides normalized financial metrics, company information, and peer comparisons for investment analysis.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support",
+      "email": "support@example.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+      "description": "Development server"
+    },
+    {
+      "url": "https://api.financialviz.com",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "companies",
+      "description": "Company information and financial data"
+    },
+    {
+      "name": "metrics",
+      "description": "Financial metrics and time series data"
+    },
+    {
+      "name": "health",
+      "description": "Service health and status"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Service health check",
+        "description": "Returns the health status of the API and its dependencies",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service is unhealthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/companies/search": {
+      "get": {
+        "tags": ["companies"],
+        "summary": "Search for companies",
+        "description": "Search for companies by ticker symbol, name, or CIK",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Search query (ticker, company name, or CIK)",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "example": "AAPL"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum number of results to return",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanySearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimitError"
+          }
+        }
+      }
+    },
+    "/api/companies/{ticker}": {
+      "get": {
+        "tags": ["companies"],
+        "summary": "Get company metadata",
+        "description": "Get detailed information about a company by ticker symbol",
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "required": true,
+            "description": "Company ticker symbol",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z]{1,5}$",
+              "example": "AAPL"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/companies/{ticker}/overview": {
+      "get": {
+        "tags": ["companies"],
+        "summary": "Get company financial overview",
+        "description": "Get key financial metrics for dashboard display",
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "required": true,
+            "description": "Company ticker symbol",
+            "schema": {
+              "type": "string",
+              "example": "AAPL"
+            }
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "required": false,
+            "description": "Time range for data",
+            "schema": {
+              "type": "string",
+              "enum": ["1y", "2y", "3y", "5y"],
+              "default": "3y"
+            }
+          },
+          {
+            "name": "refresh",
+            "in": "query",
+            "required": false,
+            "description": "Force refresh of cached data",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company financial overview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyOverviewResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/companies/{ticker}/refresh": {
+      "post": {
+        "tags": ["companies"],
+        "summary": "Refresh company data",
+        "description": "Queue a job to refresh company financial data from SEC filings",
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "required": true,
+            "description": "Company ticker symbol",
+            "schema": {
+              "type": "string",
+              "example": "AAPL"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Refresh job queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/companies/{ticker}/refresh/{jobId}": {
+      "get": {
+        "tags": ["companies"],
+        "summary": "Get refresh job status",
+        "description": "Check the status of a data refresh job",
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "required": true,
+            "description": "Company ticker symbol",
+            "schema": {
+              "type": "string",
+              "example": "AAPL"
+            }
+          },
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "description": "Job ID from refresh request",
+            "schema": {
+              "type": "string",
+              "example": "job-123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobStatusResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/companies/{ticker}/metrics/{concept}": {
+      "get": {
+        "tags": ["metrics"],
+        "summary": "Get metric time series",
+        "description": "Get historical time series data for a financial metric",
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "required": true,
+            "description": "Company ticker symbol",
+            "schema": {
+              "type": "string",
+              "example": "AAPL"
+            }
+          },
+          {
+            "name": "concept",
+            "in": "path",
+            "required": true,
+            "description": "Financial concept name",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Revenues",
+                "NetIncomeLoss",
+                "CashAndCashEquivalentsAtCarryingValue",
+                "LongTermDebtNoncurrent",
+                "Assets",
+                "Liabilities",
+                "StockholdersEquity"
+              ],
+              "example": "Revenues"
+            }
+          },
+          {
+            "name": "frequency",
+            "in": "query",
+            "required": false,
+            "description": "Data frequency",
+            "schema": {
+              "type": "string",
+              "enum": ["quarterly", "annual", "all"],
+              "default": "quarterly"
+            }
+          },
+          {
+            "name": "range",
+            "in": "query",
+            "required": false,
+            "description": "Time range",
+            "schema": {
+              "type": "string",
+              "enum": ["1y", "2y", "3y", "5y", "10y"],
+              "default": "3y"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Metric time series data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricTimeSeriesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/companies/{ticker}/metrics/{concept}/peers": {
+      "get": {
+        "tags": ["metrics"],
+        "summary": "Get peer comparison",
+        "description": "Compare a metric against peer companies in the same industry",
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "required": true,
+            "description": "Company ticker symbol",
+            "schema": {
+              "type": "string",
+              "example": "AAPL"
+            }
+          },
+          {
+            "name": "concept",
+            "in": "path",
+            "required": true,
+            "description": "Financial concept name",
+            "schema": {
+              "type": "string",
+              "example": "Revenues"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Peer comparison data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeerComparisonResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok", "error"]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "services": {
+            "type": "object",
+            "properties": {
+              "database": {
+                "type": "string",
+                "enum": ["healthy", "degraded", "down"]
+              },
+              "provider": {
+                "type": "string",
+                "enum": ["healthy", "degraded", "down"]
+              },
+              "redis": {
+                "type": "string",
+                "enum": ["healthy", "degraded", "down"]
+              }
+            }
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "CompanySearchResult": {
+        "type": "object",
+        "properties": {
+          "cik": {
+            "type": "string",
+            "description": "SEC CIK identifier",
+            "example": "0000320193"
+          },
+          "ticker": {
+            "type": "string",
+            "description": "Stock ticker symbol",
+            "example": "AAPL"
+          },
+          "name": {
+            "type": "string",
+            "description": "Company name",
+            "example": "Apple Inc."
+          },
+          "sic": {
+            "type": "string",
+            "description": "Standard Industry Classification code",
+            "example": "3571"
+          },
+          "sector": {
+            "type": "string",
+            "description": "Business sector",
+            "example": "Technology"
+          },
+          "industry": {
+            "type": "string",
+            "description": "Industry classification",
+            "example": "Consumer Electronics"
+          }
+        },
+        "required": ["cik", "ticker", "name"]
+      },
+      "CompanySearchResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompanySearchResult"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "query": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "Company": {
+        "type": "object",
+        "properties": {
+          "cik": {
+            "type": "string",
+            "example": "0000320193"
+          },
+          "ticker": {
+            "type": "string",
+            "example": "AAPL"
+          },
+          "name": {
+            "type": "string",
+            "example": "Apple Inc."
+          },
+          "sic": {
+            "type": "string",
+            "example": "3571"
+          },
+          "fiscalYearEnd": {
+            "type": "string",
+            "example": "0930"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CompanyResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Company"
+          }
+        }
+      },
+      "MetricOverview": {
+        "type": "object",
+        "properties": {
+          "concept": {
+            "type": "string",
+            "example": "Revenues"
+          },
+          "label": {
+            "type": "string",
+            "example": "Revenue"
+          },
+          "value": {
+            "type": "number",
+            "example": 383285000000
+          },
+          "unit": {
+            "type": "string",
+            "example": "USD"
+          },
+          "periodEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fiscalPeriod": {
+            "type": "string",
+            "example": "FY"
+          },
+          "fiscalYear": {
+            "type": "integer",
+            "example": 2023
+          },
+          "change": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "number"
+              },
+              "percentage": {
+                "type": "number"
+              },
+              "period": {
+                "type": "string",
+                "enum": ["QoQ", "YoY"]
+              }
+            }
+          }
+        }
+      },
+      "CompanyOverview": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "type": "object",
+            "properties": {
+              "cik": {
+                "type": "string"
+              },
+              "ticker": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "sic": {
+                "type": "string"
+              },
+              "fiscalYearEnd": {
+                "type": "string"
+              }
+            }
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetricOverview"
+            }
+          },
+          "lastUpdated": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "source": {
+            "type": "string",
+            "example": "SEC EDGAR"
+          },
+          "disclaimer": {
+            "type": "string"
+          }
+        }
+      },
+      "CompanyOverviewResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CompanyOverview"
+          }
+        }
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "properties": {
+          "force": {
+            "type": "boolean",
+            "default": false,
+            "description": "Force refresh even if data is recent"
+          },
+          "concepts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific concepts to refresh (optional)"
+          }
+        }
+      },
+      "RefreshResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "jobId": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["queued"]
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "JobStatus": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["waiting", "active", "completed", "failed"]
+          },
+          "progress": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "result": {
+            "type": "object"
+          },
+          "error": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "processedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "JobStatusResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/JobStatus"
+          }
+        }
+      },
+      "MetricTimeSeries": {
+        "type": "object",
+        "properties": {
+          "concept": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "periodEnd": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "value": {
+                  "type": "number"
+                },
+                "fiscalPeriod": {
+                  "type": "string"
+                },
+                "fiscalYear": {
+                  "type": "integer"
+                },
+                "filingAccession": {
+                  "type": "string"
+                },
+                "form": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "dataPoints": {
+                "type": "integer"
+              },
+              "periodRange": {
+                "type": "object",
+                "properties": {
+                  "start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "end": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              },
+              "frequency": {
+                "type": "string",
+                "enum": ["quarterly", "annual", "mixed"]
+              }
+            }
+          }
+        }
+      },
+      "MetricTimeSeriesResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/MetricTimeSeries"
+          }
+        }
+      },
+      "PeerComparison": {
+        "type": "object",
+        "properties": {
+          "concept": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "company": {
+                "type": "object",
+                "properties": {
+                  "ticker": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              },
+              "value": {
+                "type": "number"
+              },
+              "periodEnd": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          "peers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "company": {
+                  "type": "object",
+                  "properties": {
+                    "ticker": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "value": {
+                  "type": "number"
+                },
+                "periodEnd": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "sicCode": {
+                "type": "string"
+              },
+              "totalPeers": {
+                "type": "integer"
+              },
+              "dataDate": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "PeerComparisonResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PeerComparison"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "type": "object"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "requestId": {
+                "type": "string"
+              }
+            },
+            "required": ["code", "message", "timestamp"]
+          }
+        }
+      }
+    },
+    "responses": {
+      "ValidationError": {
+        "description": "Validation error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "NotFoundError": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        }
+      },
+      "RateLimitError": {
+        "description": "Rate limit exceeded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            }
+          }
+        },
+        "headers": {
+          "X-RateLimit-Limit": {
+            "description": "Request limit per time window",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          "X-RateLimit-Remaining": {
+            "description": "Remaining requests in current window",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          "X-RateLimit-Reset": {
+            "description": "Time when rate limit resets",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "Retry-After": {
+            "description": "Seconds to wait before retrying",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    }
+  }
+}
