@@ -110,8 +110,31 @@ npm run type-check  # TypeScript checks
 - No deployment without 90%+ test coverage
 - Manual verification against SEC filings for sample companies
 
+## Research and Documentation System
+
+The project uses specialized research agents and structured documentation:
+
+**Research Communication**:
+- `docs/communication/agent-handoffs.md` - Active communication between agents
+- `docs/communication/research-requests.md` - Pending and completed research requests
+- Research findings documented in `docs/research/` with version control
+
+**Architecture Decisions**:
+- `docs/decisions/` - Architecture Decision Records (ADRs) based on research
+- Each ADR links to supporting research and tracks implementation status
+- Decision rationale preserved for future reference
+
+**Current Research Status**:
+- ✅ Financial data providers analysis complete (financial-data-researcher agent)
+- 📋 UI/UX design patterns research pending
+- 📋 Database optimization research pending
+- 📋 Security and compliance research pending
+
 ## Key Implementation Notes
 
+- **Data Provider Abstraction**: Clean separation with contract testing (ADR-001)
+- **SEC EDGAR Primary**: Authoritative source with commercial provider support (ADR-002)  
+- **Contract Testing**: Comprehensive data quality assurance (ADR-003)
 - **Fiscal Periods**: Handles instant vs duration concepts properly
 - **Data Quality**: Prefers latest filings, handles amendments
 - **Performance**: Materialized views for dashboard queries
