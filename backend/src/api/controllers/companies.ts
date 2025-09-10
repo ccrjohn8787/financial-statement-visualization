@@ -71,6 +71,10 @@ export class CompaniesController {
   getByTicker = async (req: Request, res: Response) => {
     const { ticker } = req.params;
 
+    if (!ticker) {
+      throw new ApiError(400, 'INVALID_TICKER', 'Ticker parameter is required');
+    }
+
     try {
       const company = await this.prisma.company.findUnique({
         where: { ticker: ticker.toUpperCase() },
@@ -103,6 +107,10 @@ export class CompaniesController {
   getOverview = async (req: Request, res: Response) => {
     const { ticker } = req.params;
     const { range, refresh } = req.query as OverviewQuery;
+
+    if (!ticker) {
+      throw new ApiError(400, 'INVALID_TICKER', 'Ticker parameter is required');
+    }
 
     try {
       // Get company info
@@ -181,6 +189,10 @@ export class CompaniesController {
     const { ticker } = req.params;
     const { force, concepts } = req.body as RefreshRequest;
 
+    if (!ticker) {
+      throw new ApiError(400, 'INVALID_TICKER', 'Ticker parameter is required');
+    }
+
     try {
       // Get company CIK
       const company = await this.prisma.company.findUnique({
@@ -197,7 +209,6 @@ export class CompaniesController {
         cik: company.cik,
         ticker: ticker.toUpperCase(),
         force,
-        concepts,
       });
 
       res.json({
@@ -218,6 +229,10 @@ export class CompaniesController {
   // GET /api/companies/:ticker/refresh/:jobId
   getRefreshStatus = async (req: Request, res: Response) => {
     const { jobId } = req.params;
+
+    if (!jobId) {
+      throw new ApiError(400, 'INVALID_JOB_ID', 'Job ID parameter is required');
+    }
 
     try {
       const status = await getJobStatus(jobId);

@@ -25,6 +25,10 @@ const mockProvider: IFinancialDataProvider = {
     hasRealTimeData: false,
     hasPeerData: false,
     hasHistoricalData: true,
+    hasRatioData: false,
+    hasAnalystData: false,
+    hasEconomicData: false,
+    hasNewsData: false,
   },
   searchCompanies: vi.fn(),
   getCompanyMetadata: vi.fn(),
@@ -77,7 +81,7 @@ describe('CompaniesController', () => {
       ];
 
       mockPrisma.company.findMany.mockResolvedValue(mockCompanies);
-      mockReq.query = { q: 'AAPL', limit: 10 };
+      mockReq.query = { q: 'AAPL', limit: '10' };
 
       await controller.search(mockReq as Request, mockRes as Response);
 
@@ -117,7 +121,7 @@ describe('CompaniesController', () => {
 
     it('should handle database errors', async () => {
       mockPrisma.company.findMany.mockRejectedValue(new Error('Database error'));
-      mockReq.query = { q: 'AAPL', limit: 10 };
+      mockReq.query = { q: 'AAPL', limit: '10' };
 
       await expect(
         controller.search(mockReq as Request, mockRes as Response)
@@ -207,7 +211,7 @@ describe('CompaniesController', () => {
       mockPrisma.metricView.findFirst.mockResolvedValue(null);
 
       mockReq.params = { ticker: 'AAPL' };
-      mockReq.query = { range: '3y', refresh: false };
+      mockReq.query = { range: '3y', refresh: 'false' };
 
       await controller.getOverview(mockReq as Request, mockRes as Response);
 
@@ -243,7 +247,7 @@ describe('CompaniesController', () => {
     it('should handle company not found', async () => {
       mockPrisma.company.findUnique.mockResolvedValue(null);
       mockReq.params = { ticker: 'NONEXISTENT' };
-      mockReq.query = { range: '3y', refresh: false };
+      mockReq.query = { range: '3y', refresh: 'false' };
 
       await expect(
         controller.getOverview(mockReq as Request, mockRes as Response)

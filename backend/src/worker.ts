@@ -52,7 +52,7 @@ async function main() {
 
         // Ingest company data
         const result = await ingestionService.ingestCompanyData(cik, {
-          force,
+          force: force || false,
           concepts: dashboardConcepts,
           maxAge: 24, // 24 hours
         });

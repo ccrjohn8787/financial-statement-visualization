@@ -1,12 +1,15 @@
 import { SECEdgarProvider, type SECEdgarConfig } from './sec-edgar';
+import { FMPProvider, type FMPConfig } from './fmp';
+import { AlphaVantageProvider, type AlphaVantageConfig } from './alpha-vantage';
+import { FinnhubProvider, type FinnhubConfig } from './finnhub';
 import { ProviderRegistry, type IFinancialDataProvider } from './base';
 import { DataProviderError } from './types';
 
 export interface ProviderConfig {
   'SEC-EDGAR': SECEdgarConfig;
-  // Future providers can be added here
-  // 'ALPHA_VANTAGE': AlphaVantageConfig;
-  // 'FINANCIAL_MODELING_PREP': FMPConfig;
+  'FMP': FMPConfig;
+  'ALPHA_VANTAGE': AlphaVantageConfig;
+  'FINNHUB': FinnhubConfig;
 }
 
 export type ProviderName = keyof ProviderConfig;
@@ -39,6 +42,15 @@ export class ProviderFactory {
     switch (name) {
       case 'SEC-EDGAR':
         return new SECEdgarProvider(config as SECEdgarConfig);
+      
+      case 'FMP':
+        return new FMPProvider(config as FMPConfig);
+        
+      case 'ALPHA_VANTAGE':
+        return new AlphaVantageProvider(config as AlphaVantageConfig);
+        
+      case 'FINNHUB':
+        return new FinnhubProvider(config as FinnhubConfig);
       
       default:
         throw new DataProviderError(
@@ -82,7 +94,7 @@ export class ProviderFactory {
       );
     }
 
-    // Register SEC EDGAR as primary provider
+    // Register SEC EDGAR as primary provider (always required)
     const secProvider = this.registerProvider(
       'SEC-EDGAR',
       {
@@ -93,11 +105,71 @@ export class ProviderFactory {
       true // Set as primary
     );
 
-    // Verify provider is working
+    // Verify primary provider is working
     const isHealthy = await secProvider.healthCheck();
     if (!isHealthy) {
       console.warn('Warning: Primary SEC-EDGAR provider failed health check');
     }
+
+    // Optionally register FMP provider for enhanced data
+    const fmpApiKey = process.env.FMP_API_KEY;
+    if (fmpApiKey) {
+      try {
+        const fmpProvider = this.registerProvider('FMP', {
+          apiKey: fmpApiKey,
+        });
+        
+        const fmpHealthy = await fmpProvider.healthCheck();
+        if (fmpHealthy) {
+          console.log('FMP provider registered successfully');
+        } else {
+          console.warn('Warning: FMP provider failed health check');
+        }
+      } catch (error) {
+        console.warn('Warning: Failed to initialize FMP provider:', error);
+      }
+    }
+
+    // Optionally register Finnhub provider for enhanced company search and financial statements
+    const finnhubApiKey = process.env.FINNHUB_API_KEY;
+    if (finnhubApiKey) {
+      try {
+        const finnhubProvider = this.registerProvider('FINNHUB', {
+          apiKey: finnhubApiKey,
+        });
+        
+        const finnhubHealthy = await finnhubProvider.healthCheck();
+        if (finnhubHealthy) {
+          console.log('Finnhub provider registered successfully');
+        } else {
+          console.warn('Warning: Finnhub provider failed health check');
+        }
+      } catch (error) {
+        console.warn('Warning: Failed to initialize Finnhub provider:', error);
+      }
+    }
+
+    // Optionally register Alpha Vantage provider for real-time data
+    const avApiKey = process.env.ALPHA_VANTAGE_API_KEY;
+    if (avApiKey) {
+      try {
+        const avProvider = this.registerProvider('ALPHA_VANTAGE', {
+          apiKey: avApiKey,
+          tier: process.env.ALPHA_VANTAGE_TIER as 'free' | 'premium' || 'free',
+        });
+        
+        const avHealthy = await avProvider.healthCheck();
+        if (avHealthy) {
+          console.log('Alpha Vantage provider registered successfully');
+        } else {
+          console.warn('Warning: Alpha Vantage provider failed health check');
+        }
+      } catch (error) {
+        console.warn('Warning: Failed to initialize Alpha Vantage provider:', error);
+      }
+    }
+
+    console.log(`Initialized ${this.registry.getAll().length} data providers`);
   }
 
   /**

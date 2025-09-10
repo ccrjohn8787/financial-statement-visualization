@@ -12,6 +12,14 @@ export class MetricsController {
     const { ticker, concept } = req.params;
     const { frequency, range, start_date, end_date } = req.query as MetricQuery;
 
+    if (!ticker) {
+      throw new ApiError(400, 'INVALID_TICKER', 'Ticker parameter is required');
+    }
+
+    if (!concept) {
+      throw new ApiError(400, 'INVALID_CONCEPT', 'Concept parameter is required');
+    }
+
     try {
       // Validate concept
       if (!(concept in FINANCIAL_CONCEPTS)) {
@@ -96,6 +104,14 @@ export class MetricsController {
   // GET /api/companies/:ticker/metrics/:concept/peers
   getPeerComparison = async (req: Request, res: Response) => {
     const { ticker, concept } = req.params;
+
+    if (!ticker) {
+      throw new ApiError(400, 'INVALID_TICKER', 'Ticker parameter is required');
+    }
+
+    if (!concept) {
+      throw new ApiError(400, 'INVALID_CONCEPT', 'Concept parameter is required');
+    }
 
     try {
       // Validate concept

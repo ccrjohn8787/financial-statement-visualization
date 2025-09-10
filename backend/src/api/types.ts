@@ -84,12 +84,12 @@ export const ApiErrorSchema = z.object({
 // Request schemas
 export const CompanySearchQuerySchema = z.object({
   q: z.string().min(1).max(100),
-  limit: z.number().min(1).max(20).default(10),
+  limit: z.coerce.number().min(1).max(20).default(10),
 });
 
 export const OverviewQuerySchema = z.object({
   range: z.enum(['1y', '2y', '3y', '5y']).default('3y'),
-  refresh: z.boolean().default(false),
+  refresh: z.coerce.boolean().default(false),
 });
 
 export const MetricQuerySchema = z.object({
@@ -101,7 +101,7 @@ export const MetricQuerySchema = z.object({
 });
 
 export const RefreshRequestSchema = z.object({
-  force: z.boolean().default(false),
+  force: z.coerce.boolean().default(false),
   concepts: z.array(z.string()).optional(),
 });
 

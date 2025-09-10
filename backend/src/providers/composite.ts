@@ -32,6 +32,10 @@ export class CompositeProvider implements ICompositeProvider {
       hasRealTimeData: false,
       hasPeerData: false,
       hasHistoricalData: false,
+      hasRatioData: false,
+      hasAnalystData: false,
+      hasEconomicData: false,
+      hasNewsData: false,
     };
 
     this.providers.forEach(({ provider }) => {
@@ -40,6 +44,10 @@ export class CompositeProvider implements ICompositeProvider {
       capabilities.hasRealTimeData = capabilities.hasRealTimeData || provider.capabilities.hasRealTimeData;
       capabilities.hasPeerData = capabilities.hasPeerData || provider.capabilities.hasPeerData;
       capabilities.hasHistoricalData = capabilities.hasHistoricalData || provider.capabilities.hasHistoricalData;
+      capabilities.hasRatioData = capabilities.hasRatioData || provider.capabilities.hasRatioData;
+      capabilities.hasAnalystData = capabilities.hasAnalystData || provider.capabilities.hasAnalystData;
+      capabilities.hasEconomicData = capabilities.hasEconomicData || provider.capabilities.hasEconomicData;
+      capabilities.hasNewsData = capabilities.hasNewsData || provider.capabilities.hasNewsData;
       
       // Take the maximum history years
       if (provider.capabilities.maxHistoryYears) {

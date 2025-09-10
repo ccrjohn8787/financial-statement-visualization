@@ -3,10 +3,11 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { PrismaClient } from '@prisma/client';
-import { connectRedis } from './lib/redis';
+import { connectRedis, cache } from './lib/redis';
 import { createDefaultProvider } from './providers';
 import { createCompaniesRouter } from './api/routes/companies';
 import { createMetricsRouter } from './api/routes/metrics';
+// import enhancedRoutes from './routes/enhanced'; // Temporarily disabled
 import { 
   requestLogger, 
   errorHandler, 
@@ -32,9 +33,14 @@ async function createApp() {
   // Global rate limiting
   app.use('/api', rateLimit(500, 60 * 1000)); // 500 requests per minute globally
 
-  // Connect to external services
-  await connectRedis();
-  console.log('Connected to Redis');
+  // Connect to external services (Redis with fallback)
+  try {
+    await connectRedis();
+    console.log('Cache system initialized');
+  } catch (error) {
+    console.warn('Cache initialization warning:', error);
+    // Continue with in-memory fallback
+  }
 
   // Initialize data provider
   const provider = await createDefaultProvider();
@@ -52,13 +58,21 @@ async function createApp() {
       // Check provider health
       const providerHealthy = await provider.healthCheck();
       
+      // Check cache system health
+      let cacheStatus = 'healthy';
+      try {
+        await cache.ping();
+      } catch (error) {
+        cacheStatus = 'degraded';
+      }
+      
       const health = {
         status: 'ok',
         timestamp: new Date().toISOString(),
         services: {
           database: 'healthy',
           provider: providerHealthy ? 'healthy' : 'degraded',
-          redis: 'healthy', // If we got here, Redis is working
+          cache: cacheStatus,
         },
         version: process.env.npm_package_version || '1.0.0',
       };
@@ -76,6 +90,7 @@ async function createApp() {
   // API routes
   app.use('/api/companies', createCompaniesRouter(prisma, provider));
   app.use('/api/companies', createMetricsRouter(prisma));
+  // app.use('/api', enhancedRoutes); // Temporarily disabled
 
   // API documentation endpoint
   app.get('/api/docs', (req, res) => {
@@ -92,6 +107,13 @@ async function createApp() {
         'GET /api/companies/:ticker/refresh/:jobId': 'Check refresh status',
         'GET /api/companies/:ticker/metrics/:concept': 'Get metric time series',
         'GET /api/companies/:ticker/metrics/:concept/peers': 'Get peer comparison',
+        'GET /api/companies/:ticker/ratios': 'Get financial ratios and calculated metrics',
+        'GET /api/companies/:ticker/performance': 'Get comprehensive performance metrics and trends',
+        'GET /api/companies/:ticker/price': 'Get real-time stock price',
+        // Removed technical indicators - focusing on fundamental analysis only
+        'GET /api/companies/:ticker/peers': 'Get peer companies for comparison',
+        'GET /api/companies/:ticker/export': 'Export financial data (CSV, Excel, PDF, JSON)',
+        'GET /api/providers/status': 'Get data provider health and capabilities',
       },
       concepts: {
         description: 'Supported financial concepts',

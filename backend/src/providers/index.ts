@@ -13,6 +13,9 @@ export type {
   FinancialData,
   PeerCompany,
   ProviderCapabilities,
+  FinancialRatio,
+  RealTimePrice,
+  AnalystEstimate,
 } from './types';
 export {
   CompanyMetadataSchema,
@@ -27,6 +30,7 @@ export {
 
 // Concrete provider implementations
 export { SECEdgarProvider, type SECEdgarConfig } from './sec-edgar';
+export { FinnhubProvider, type FinnhubConfig } from './finnhub';
 export { CompositeProvider } from './composite';
 
 // Factory for creating and managing providers

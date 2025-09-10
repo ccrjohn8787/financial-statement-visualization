@@ -218,16 +218,16 @@ export class IngestionService {
         update: {
           ticker: company.ticker,
           name: company.name,
-          sic: company.sic,
-          fiscalYearEnd: company.fiscalYearEnd,
+          sic: company.sic || null,
+          fiscalYearEnd: company.fiscalYearEnd || null,
           updatedAt: new Date(),
         },
         create: {
           cik: company.cik,
           ticker: company.ticker,
           name: company.name,
-          sic: company.sic,
-          fiscalYearEnd: company.fiscalYearEnd,
+          sic: company.sic || null,
+          fiscalYearEnd: company.fiscalYearEnd || null,
         },
       });
 
@@ -259,7 +259,7 @@ export class IngestionService {
             concept: metric.concept,
             taxonomy: 'us-gaap', // Default for now
             unit: metric.unit,
-            periodStart: metric.periodStart,
+            periodStart: metric.periodStart || null,
             periodEnd: metric.periodEnd,
             value: metric.value,
             instant: metric.instant,
