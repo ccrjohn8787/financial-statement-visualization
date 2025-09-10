@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  cik           String @id @db.VarChar(10)
+  ticker        String @unique @db.VarChar(10)
+  name          String @db.VarChar(255)
+  sic           String? @db.VarChar(4)
+  fiscalYearEnd String? @db.VarChar(4)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  facts         Fact[]
+  metricViews   MetricView[]
+  
+  @@map("companies")
+}
+
+model Fact {
+  id              String   @id @default(cuid())
+  cik             String   @db.VarChar(10)
+  concept         String   @db.VarChar(100)
+  taxonomy        String   @db.VarChar(50)
+  unit            String   @db.VarChar(20)
+  periodStart     DateTime?
+  periodEnd       DateTime
+  value           Decimal  @db.Decimal(20, 4)
+  instant         Boolean  @default(false)
+  fiscalYear      Int
+  fiscalPeriod    String   @db.VarChar(10)
+  filingAccession String   @db.VarChar(20)
+  form            String   @db.VarChar(10)
+  amended         Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  
+  company         Company  @relation(fields: [cik], references: [cik])
+  
+  @@index([cik, concept, periodEnd])
+  @@index([cik, fiscalYear, fiscalPeriod])
+  @@index([filingAccession])
+  @@map("facts")
+}
+
+// Materialized view for fast metric queries
+model MetricView {
+  id           String   @id @default(cuid())
+  cik          String   @db.VarChar(10)
+  metric       String   @db.VarChar(100)
+  periodEnd    DateTime
+  value        Decimal  @db.Decimal(20, 4)
+  fiscalPeriod String   @db.VarChar(10)
+  fiscalYear   Int
+  updatedAt    DateTime @updatedAt
+  
+  company      Company  @relation(fields: [cik], references: [cik])
+  
+  @@unique([cik, metric, periodEnd])
+  @@index([cik, metric])
+  @@map("metric_views")
+}
