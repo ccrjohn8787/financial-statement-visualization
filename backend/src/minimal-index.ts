@@ -8,6 +8,9 @@ import { FinScopeMetricsService } from './services/finscopeMetrics';
 import { LLMService } from './services/llm';
 import { HealthScoringService } from './services/healthScoring';
 import { PromptManager } from './services/prompts';
+import { ComparisonService } from './services/comparisonService';
+import { TrendAnalysisService } from './services/trendAnalysisService';
+import { InsightsService } from './services/insightsService';
 
 async function createApp() {
   const app = express();
@@ -22,7 +25,10 @@ async function createApp() {
   // Initialize AI services
   const llmService = new LLMService();
   const healthScoringService = new HealthScoringService(llmService);
-  console.log(`🤖 AI services initialized`);
+  const comparisonService = new ComparisonService(finScopeMetrics, llmService);
+  const trendAnalysisService = new TrendAnalysisService(finScopeMetrics, llmService);
+  const insightsService = new InsightsService(finScopeMetrics, llmService);
+  console.log(`🤖 AI services initialized (5 services)`);
 
   // Test services connection
   let servicesHealthy = false;
@@ -409,6 +415,120 @@ async function createApp() {
     };
     return labelMap[concept] || concept;
   }
+
+  // Company Comparison endpoint - Sprint 4
+  app.get('/api/compare', async (req, res) => {
+    const { companies } = req.query;
+
+    if (!companies) {
+      return res.status(400).json({
+        error: { code: 'MISSING_COMPANIES', message: 'companies parameter is required' }
+      });
+    }
+
+    try {
+      const tickers = typeof companies === 'string' ? companies.split(',') : [];
+
+      if (tickers.length < 2 || tickers.length > 5) {
+        return res.status(400).json({
+          error: {
+            code: 'INVALID_COMPANIES',
+            message: 'Must provide 2-5 companies for comparison'
+          }
+        });
+      }
+
+      console.log(`🔄 Starting comparison for: ${tickers.join(', ')}`);
+      const comparisonResult = await comparisonService.compareCompanies(tickers);
+
+      res.json({
+        data: comparisonResult,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('❌ Comparison endpoint error:', error);
+      res.status(500).json({
+        error: {
+          code: 'COMPARISON_FAILED',
+          message: 'Failed to compare companies',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  // Historical Trends endpoint - Sprint 4
+  app.get('/api/company/:ticker/trends', async (req, res) => {
+    const { ticker } = req.params;
+    const quarters = parseInt(req.query.quarters as string) || 8;
+
+    if (!ticker) {
+      return res.status(400).json({
+        error: { code: 'INVALID_TICKER', message: 'Ticker parameter is required' }
+      });
+    }
+
+    if (quarters < 2 || quarters > 20) {
+      return res.status(400).json({
+        error: {
+          code: 'INVALID_QUARTERS',
+          message: 'Quarters must be between 2 and 20'
+        }
+      });
+    }
+
+    try {
+      console.log(`📈 Analyzing trends for ${ticker.toUpperCase()} over ${quarters} quarters`);
+      const trendAnalysis = await trendAnalysisService.analyzeTrends(ticker, quarters);
+
+      res.json({
+        data: trendAnalysis,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error(`❌ Trends endpoint error for ${ticker}:`, error);
+      res.status(500).json({
+        error: {
+          code: 'TRENDS_FAILED',
+          message: 'Failed to analyze trends',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  // Financial Insights endpoint - Sprint 4
+  app.get('/api/company/:ticker/insights', async (req, res) => {
+    const { ticker } = req.params;
+
+    if (!ticker) {
+      return res.status(400).json({
+        error: { code: 'INVALID_TICKER', message: 'Ticker parameter is required' }
+      });
+    }
+
+    try {
+      console.log(`🔍 Generating insights for ${ticker.toUpperCase()}`);
+      const insights = await insightsService.generateInsights(ticker);
+
+      res.json({
+        data: insights,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error(`❌ Insights endpoint error for ${ticker}:`, error);
+      res.status(500).json({
+        error: {
+          code: 'INSIGHTS_FAILED',
+          message: 'Failed to generate insights',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
 
   // Health check endpoint
   app.get('/health', async (req, res) => {

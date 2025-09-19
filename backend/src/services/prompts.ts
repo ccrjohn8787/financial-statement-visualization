@@ -20,115 +20,138 @@ export class PromptManager {
     // Health Scoring Prompts
     health_score_analysis: {
       id: 'health_score_analysis',
-      version: '1.0',
-      description: 'Generates overall financial health score with reasoning',
+      version: '2.0',
+      description: 'Optimized financial health scoring for Groq/Llama with structured output',
       category: 'health_scoring',
       variables: ['companyName', 'ticker', 'metrics', 'industry'],
-      template: `Analyze the financial health of {{companyName}} ({{ticker}}) based on these 6 key metrics:
+      template: `Analyze {{companyName}} ({{ticker}}) financial health using these metrics:
 
 {{metrics}}
 
-Consider this company operates in the {{industry}} industry.
+Industry: {{industry}}
 
-Provide a comprehensive analysis with:
+Provide analysis in this exact format:
 
-1. **Overall Health Grade**: A+ to F scale
-2. **Score Breakdown**: Weight and assessment for each metric
-3. **Strengths**: Top 2-3 financial strengths
-4. **Concerns**: Top 1-2 areas of concern (if any)
-5. **Industry Context**: How these metrics compare to {{industry}} standards
-6. **Risk Assessment**: Key financial risks to monitor
+**GRADE: [A+ to F]**
 
-Be specific about the numbers and provide clear reasoning for the grade. Use percentages and ratios to support your analysis.`
+**STRENGTHS:**
+• [Top strength with specific number]
+• [Second strength with specific number]
+
+**CONCERNS:**
+• [Main concern if any, or "None identified"]
+
+**INDUSTRY CONTEXT:**
+[2-sentence comparison to {{industry}} benchmarks]
+
+**INVESTMENT LOGIC:**
+[3-sentence reasoning for grade focusing on key financial drivers]
+
+Use specific percentages/ratios from the metrics. Keep total response under 200 words.`
     },
 
     metric_explanation_technical: {
       id: 'metric_explanation_technical',
-      version: '1.0',
-      description: 'Technical explanation of a specific financial metric',
+      version: '2.0',
+      description: 'Concise technical metric explanation optimized for financial accuracy',
       category: 'explanation',
       variables: ['metricName', 'value', 'unit', 'companyName', 'ticker'],
-      template: `Explain the {{metricName}} metric for {{companyName}} ({{ticker}}):
+      template: `{{metricName}} Analysis for {{companyName}} ({{ticker}}): {{value}} {{unit}}
 
-Current Value: {{value}} {{unit}}
+**DEFINITION:** [One sentence: what this measures]
 
-Provide a technical analysis covering:
+**CALCULATION:** [Formula or data source]
 
-1. **Definition**: What exactly this metric measures
-2. **Calculation**: How this number is derived
-3. **Interpretation**: What {{value}} {{unit}} means for {{companyName}}
-4. **Industry Benchmarks**: How this compares to typical ranges
-5. **Significance**: Why this metric matters for investors
-6. **Trends**: What investors should watch for changes
+**INTERPRETATION:** {{value}} {{unit}} indicates [performance assessment - strong/weak/average]
 
-Keep the explanation accurate and detailed for informed investors.`
+**BENCHMARKS:** Typical {{metricName}} ranges: [industry standards]
+
+**INVESTOR SIGNIFICANCE:** [Why this matters for investment decisions]
+
+**WATCH FOR:** [Key trend indicators or red flags]
+
+Limit to 150 words. Focus on actionable insights for retail investors.`
     },
 
     metric_explanation_simple: {
       id: 'metric_explanation_simple',
-      version: '1.0',
-      description: 'Simple, analogical explanation of a financial metric',
+      version: '2.0',
+      description: 'Simplified metric explanation using clear analogies',
       category: 'explanation',
       variables: ['metricName', 'value', 'unit', 'companyName'],
-      template: `Explain {{companyName}}'s {{metricName}} of {{value}} {{unit}} in simple terms using everyday analogies.
+      template: `{{companyName}}'s {{metricName}}: {{value}} {{unit}}
 
-Create an explanation that:
+**SIMPLE EXPLANATION:**
+Think of {{companyName}} like [specific analogy - restaurant/household/business]. Their {{metricName}} of {{value}} {{unit}} is like [complete the analogy with specific comparison].
 
-1. **Uses Real-World Analogies**: Compare to everyday situations (like household budgets, restaurant businesses, etc.)
-2. **Avoids Jargon**: Use simple language anyone can understand
-3. **Shows Impact**: What this means for the company's success
-4. **Provides Context**: Is this good, bad, or average?
-5. **Memorable Examples**: Create relatable comparisons
+**WHAT THIS MEANS:**
+[One sentence: is this good/bad/average?]
 
-Example style: "This is like a restaurant that..." or "Imagine if your household budget..."
+**BOTTOM LINE:**
+[One sentence: what should investors know?]
 
-Keep it under 100 words and make it memorable.`
+Use everyday language. No jargon. Maximum 80 words total.`
     },
 
     company_comparison: {
       id: 'company_comparison',
-      version: '1.0',
-      description: 'AI-powered comparison between multiple companies',
+      version: '2.0',
+      description: 'Structured multi-company financial comparison with clear rankings',
       category: 'comparison',
       variables: ['companies', 'metrics', 'analysisType'],
-      template: `Compare these companies across their financial metrics:
+      template: `Financial Comparison - {{analysisType}} Analysis:
 
 {{companies}}
 
-Focus on {{analysisType}} analysis.
+**RANKINGS BY METRIC:**
+[Rank each metric: 1st, 2nd, 3rd with specific values]
 
-Provide:
+**COMPETITIVE ADVANTAGES:**
+• Company A: [Key strength with number]
+• Company B: [Key strength with number]
+• Company C: [Key strength with number]
 
-1. **Relative Strengths**: Which company excels in each area
-2. **Competitive Positioning**: Market position analysis
-3. **Risk Profiles**: Compare financial stability
-4. **Growth Trajectories**: Which has better growth prospects
-5. **Value Propositions**: Investment appeal of each
-6. **Winner by Category**: Best choice for different investor types
+**RISK ASSESSMENT:**
+[Highest to lowest financial risk with reasoning]
 
-Be specific with numbers and provide clear rankings with reasoning.`
+**INVESTMENT RECOMMENDATION:**
+• Growth investors: [Company + reason]
+• Value investors: [Company + reason]
+• Income investors: [Company + reason]
+
+Use specific metrics. Keep analysis under 250 words.`
     },
 
     financial_insights: {
       id: 'financial_insights',
-      version: '1.0',
-      description: 'Generate hidden insights and patterns from financial data',
+      version: '2.0',
+      description: 'Advanced pattern recognition for non-obvious financial insights',
       category: 'insight',
       variables: ['companyName', 'ticker', 'metrics', 'industry'],
-      template: `Analyze {{companyName}} ({{ticker}}) and identify non-obvious insights from these metrics:
+      template: `Advanced Analysis: {{companyName}} ({{ticker}}) Hidden Insights
 
+Metrics:
 {{metrics}}
 
-Look for:
+**PATTERN ANALYSIS:**
+[What do the metric relationships reveal about strategy?]
 
-1. **Hidden Patterns**: Relationships between metrics that reveal strategy
-2. **Emerging Trends**: Early signals of change
-3. **Risk Factors**: Subtle warning signs
-4. **Opportunities**: Underappreciated strengths
-5. **Market Position**: Competitive advantages revealed by the numbers
-6. **Management Quality**: What the metrics say about leadership
+**EARLY SIGNALS:**
+[What trend is emerging that others might miss?]
 
-Focus on insights that aren't immediately obvious from individual metrics but emerge from the combination and context.`
+**HIDDEN RISKS:**
+[What subtle warning sign deserves attention?]
+
+**UNDERVALUED STRENGTH:**
+[What competitive advantage is the market overlooking?]
+
+**MANAGEMENT INSIGHT:**
+[What do these numbers reveal about leadership effectiveness?]
+
+**CONTRARIAN TAKE:**
+[What's the opposite view from conventional wisdom?]
+
+Focus on non-obvious insights. Support with specific metrics. 200 words maximum.`
     }
   };
 

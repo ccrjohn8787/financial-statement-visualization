@@ -57,7 +57,7 @@ export class LLMService {
     if (process.env.GROQ_API_KEY) {
       this.providers.push({
         name: 'groq',
-        model: process.env.GROQ_MODEL || 'llama3-70b-8192',
+        model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
         apiKey: process.env.GROQ_API_KEY,
         baseUrl: 'https://api.groq.com/openai/v1'
       });
