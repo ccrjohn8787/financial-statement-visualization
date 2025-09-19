@@ -4,6 +4,10 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { PrismaClient } from '@prisma/client';
 import { FinnhubClient } from './lib/finnhub';
+import { FinScopeMetricsService } from './services/finscopeMetrics';
+import { LLMService } from './services/llm';
+import { HealthScoringService } from './services/healthScoring';
+import { PromptManager } from './services/prompts';
 
 async function createApp() {
   const app = express();
@@ -12,15 +16,21 @@ async function createApp() {
   // Initialize Finnhub client (fallback to demo key if not provided)
   const finnhubApiKey = process.env.FINNHUB_API_KEY || 'demo';
   const finnhubClient = new FinnhubClient(finnhubApiKey);
-  console.log(`Initialized Finnhub client with API key: ${finnhubApiKey === 'demo' ? 'demo (limited)' : 'provided'}`);
+  const finScopeMetrics = new FinScopeMetricsService(finnhubApiKey);
+  console.log(`Initialized FinScope metrics service with API key: ${finnhubApiKey === 'demo' ? 'demo (limited)' : 'provided'}`);
 
-  // Test Finnhub connection
-  let finnhubHealthy = false;
+  // Initialize AI services
+  const llmService = new LLMService();
+  const healthScoringService = new HealthScoringService(llmService);
+  console.log(`🤖 AI services initialized`);
+
+  // Test services connection
+  let servicesHealthy = false;
   try {
-    finnhubHealthy = await finnhubClient.healthCheck();
-    console.log(`✅ Finnhub client ${finnhubHealthy ? 'connected' : 'failed connection test'}`);
+    servicesHealthy = await finScopeMetrics.healthCheck();
+    console.log(`✅ FinScope metrics service ${servicesHealthy ? 'connected' : 'failed connection test'}`);
   } catch (error) {
-    console.error('❌ Finnhub health check failed:', error);
+    console.error('❌ FinScope metrics service health check failed:', error);
   }
 
   // Security and parsing middleware
@@ -31,6 +41,181 @@ async function createApp() {
   }));
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
+
+  // AI-powered health scoring endpoint
+  app.get('/api/companies/:ticker/health-score', async (req, res) => {
+    const { ticker } = req.params;
+    const { industry = 'Technology' } = req.query;
+    
+    if (!ticker) {
+      return res.status(400).json({
+        error: { code: 'INVALID_TICKER', message: 'Ticker parameter is required' }
+      });
+    }
+
+    try {
+      console.log(`🏥 Calculating health score for ${ticker.toUpperCase()}`);
+      
+      // Get company metrics first
+      const companyData = await finScopeMetrics.getCompanyMetrics(ticker);
+      
+      // Calculate health score with AI analysis
+      const healthScore = await healthScoringService.calculateHealthScore(
+        companyData.company.name,
+        ticker.toUpperCase(),
+        companyData.metrics,
+        industry as string
+      );
+
+      res.json({ 
+        data: healthScore,
+        company: companyData.company
+      });
+    } catch (error) {
+      console.error(`❌ Health scoring failed for ${ticker}:`, error);
+      res.status(500).json({
+        error: { 
+          code: 'HEALTH_SCORE_FAILED', 
+          message: 'Failed to calculate health score',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  // AI-powered metric explanations endpoint
+  app.get('/api/companies/:ticker/explanations', async (req, res) => {
+    const { ticker } = req.params;
+    const { metric, simple = 'false' } = req.query;
+    
+    if (!ticker) {
+      return res.status(400).json({
+        error: { code: 'INVALID_TICKER', message: 'Ticker parameter is required' }
+      });
+    }
+
+    try {
+      console.log(`💬 Generating explanations for ${ticker.toUpperCase()}`);
+      
+      // Get company metrics
+      const companyData = await finScopeMetrics.getCompanyMetrics(ticker);
+      const explanations: Record<string, any> = {};
+
+      // If specific metric requested, explain just that one
+      if (metric && typeof metric === 'string') {
+        const targetMetric = companyData.metrics.find(m => 
+          m.concept.toLowerCase() === metric.toLowerCase() || 
+          m.label.toLowerCase().includes(metric.toLowerCase())
+        );
+
+        if (!targetMetric) {
+          return res.status(404).json({
+            error: { code: 'METRIC_NOT_FOUND', message: `Metric '${metric}' not found` }
+          });
+        }
+
+        const prompt = PromptManager.createMetricExplanationPrompt(
+          targetMetric.label,
+          targetMetric.value || 'N/A',
+          targetMetric.unit,
+          companyData.company.name,
+          ticker.toUpperCase(),
+          simple === 'true'
+        );
+
+        const explanation = await llmService.generateResponse({
+          prompt,
+          maxTokens: 500,
+          temperature: 0.4,
+          useCache: true
+        });
+
+        explanations[targetMetric.concept] = {
+          metric: targetMetric,
+          explanation: explanation.content,
+          type: simple === 'true' ? 'simple' : 'technical',
+          generatedAt: explanation.generatedAt,
+          confidence: explanation.confidence
+        };
+      } else {
+        // Generate explanations for all available metrics
+        const isSimple = simple === 'true';
+        
+        for (const metricData of companyData.metrics.slice(0, 3)) { // Limit to first 3 to manage costs
+          if (metricData.value === null) continue;
+          
+          try {
+            const prompt = PromptManager.createMetricExplanationPrompt(
+              metricData.label,
+              metricData.value,
+              metricData.unit,
+              companyData.company.name,
+              ticker.toUpperCase(),
+              isSimple
+            );
+
+            const explanation = await llmService.generateResponse({
+              prompt,
+              maxTokens: isSimple ? 200 : 400,
+              temperature: 0.4,
+              useCache: true
+            });
+
+            explanations[metricData.concept] = {
+              metric: metricData,
+              explanation: explanation.content,
+              type: isSimple ? 'simple' : 'technical',
+              generatedAt: explanation.generatedAt,
+              confidence: explanation.confidence
+            };
+          } catch (error) {
+            console.warn(`⚠️ Failed to generate explanation for ${metricData.concept}:`, error);
+            explanations[metricData.concept] = {
+              metric: metricData,
+              explanation: `${metricData.label} measures ${metricData.label.toLowerCase()} performance. Current value is ${metricData.value} ${metricData.unit}.`,
+              type: 'fallback',
+              error: 'AI explanation failed'
+            };
+          }
+        }
+      }
+
+      res.json({ 
+        data: explanations,
+        company: companyData.company,
+        generated: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error(`❌ Explanation generation failed for ${ticker}:`, error);
+      res.status(500).json({
+        error: { 
+          code: 'EXPLANATION_FAILED', 
+          message: 'Failed to generate explanations',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
+  // LLM service status endpoint
+  app.get('/api/llm/status', async (req, res) => {
+    try {
+      const isHealthy = await llmService.healthCheck();
+      const stats = llmService.getStats();
+      
+      res.json({
+        status: isHealthy ? 'healthy' : 'degraded',
+        stats,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(503).json({
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
 
   // Company search using Finnhub
   app.get('/api/companies/search', async (req, res) => {
@@ -84,7 +269,7 @@ async function createApp() {
     }
   });
 
-  // Company overview by ticker using Finnhub
+  // Company overview by ticker using FinScope metrics service
   app.get('/api/companies/:ticker/overview', async (req, res) => {
     const { ticker } = req.params;
     
@@ -95,81 +280,19 @@ async function createApp() {
     }
 
     try {
-      const [companyProfile, financials] = await Promise.all([
-        finnhubClient.getCompanyProfile(ticker.toUpperCase()),
-        finnhubClient.getCompanyFinancials(ticker.toUpperCase())
-      ]);
-
-      // Map Finnhub metrics to our format
-      // Note: shareOutstanding is in millions, so multiply by 1M for revenue/earnings
-      const metrics = [
-        {
-          concept: 'Revenues',
-          label: 'Revenue',
-          value: financials.metric.revenuePerShareTTM ? financials.metric.revenuePerShareTTM * companyProfile.shareOutstanding * 1000000 : null,
-          unit: 'USD',
-          periodEnd: new Date().toISOString(),
-          fiscalPeriod: 'TTM',
-          fiscalYear: new Date().getFullYear(),
-          change: financials.metric.revenueGrowthTTMYoy ? {
-            value: null,
-            percentage: financials.metric.revenueGrowthTTMYoy,
-            period: 'YoY'
-          } : null
-        },
-        {
-          concept: 'NetIncomeLoss',
-          label: 'Net Income',
-          value: financials.metric.epsInclExtraItemsTTM ? financials.metric.epsInclExtraItemsTTM * companyProfile.shareOutstanding * 1000000 : null,
-          unit: 'USD',
-          periodEnd: new Date().toISOString(),
-          fiscalPeriod: 'TTM',
-          fiscalYear: new Date().getFullYear(),
-          change: null // Would need historical data
-        },
-        {
-          concept: 'MarketCapitalization',
-          label: 'Market Cap',
-          value: financials.metric.marketCapitalization ? financials.metric.marketCapitalization * 1000000 : null,
-          unit: 'USD',
-          periodEnd: new Date().toISOString(),
-          fiscalPeriod: 'Current',
-          fiscalYear: new Date().getFullYear(),
-          change: null
-        },
-        {
-          concept: 'PERatio',
-          label: 'P/E Ratio',
-          value: financials.metric.peTTM || financials.metric.peInclExtraItemsTTM,
-          unit: 'Ratio',
-          periodEnd: new Date().toISOString(),
-          fiscalPeriod: 'TTM',
-          fiscalYear: new Date().getFullYear(),
-          change: null
-        }
-      ].filter(metric => metric.value !== null && metric.value !== undefined);
-
-      const responseData = {
-        company: {
-          cik: '0000000000', // Placeholder
-          ticker: ticker.toUpperCase(),
-          name: companyProfile.name,
-          sic: '0000', // Placeholder
-          fiscalYearEnd: '1231' // Placeholder
-        },
-        metrics,
-        lastUpdated: new Date().toISOString(),
-        source: 'Finnhub API',
-        disclaimer: 'Financial data for informational purposes only. Not investment advice.'
-      };
-
-      res.json({ data: responseData });
+      console.log(`🔍 Fetching FinScope metrics for ${ticker.toUpperCase()}`);
+      const companyData = await finScopeMetrics.getCompanyMetrics(ticker);
+      
+      console.log(`✅ Successfully retrieved ${companyData.metrics.length} metrics for ${ticker.toUpperCase()}`);
+      
+      res.json({ data: companyData });
     } catch (error) {
-      console.error('Company overview failed:', error);
+      console.error(`❌ FinScope metrics failed for ${ticker}:`, error);
       
       // Fallback to sample data for known tickers
       const sampleData = getSampleCompanyData(ticker.toUpperCase());
       if (sampleData) {
+        console.log(`📋 Using sample data for ${ticker.toUpperCase()}`);
         res.json({ data: sampleData });
       } else {
         res.status(500).json({
@@ -225,6 +348,53 @@ async function createApp() {
     return sampleDataMap[ticker] || null;
   }
 
+  // Debug endpoint for raw Finnhub data inspection
+  app.get('/api/debug/companies/:ticker/raw', async (req, res) => {
+    const { ticker } = req.params;
+    
+    if (!ticker) {
+      return res.status(400).json({
+        error: { code: 'INVALID_TICKER', message: 'Ticker parameter is required' }
+      });
+    }
+
+    try {
+      console.log(`🔍 [DEBUG] Fetching raw data for ${ticker.toUpperCase()}`);
+      const [companyProfile, financials] = await Promise.all([
+        finnhubClient.getCompanyProfile(ticker.toUpperCase()),
+        finnhubClient.getCompanyFinancials(ticker.toUpperCase())
+      ]);
+
+      res.json({
+        ticker: ticker.toUpperCase(),
+        profile: companyProfile,
+        financials: financials,
+        debugInfo: {
+          shareOutstanding: companyProfile.shareOutstanding,
+          keyMetrics: {
+            netMarginTTM: financials.metric.netMarginTTM,
+            revenueGrowthTTMYoy: financials.metric.revenueGrowthTTMYoy,
+            pfcfShareTTM: financials.metric.pfcfShareTTM,
+            peTTM: financials.metric.peTTM,
+            totalDebtToEquityQuarterly: financials.metric.totalDebtToEquityQuarterly,
+            roiTTM: financials.metric.roiTTM,
+            revenuePerShareTTM: financials.metric.revenuePerShareTTM,
+            epsInclExtraItemsTTM: financials.metric.epsInclExtraItemsTTM
+          }
+        }
+      });
+    } catch (error) {
+      console.error(`❌ [DEBUG] Failed to fetch raw data for ${ticker}:`, error);
+      res.status(500).json({
+        error: { 
+          code: 'DEBUG_FAILED', 
+          message: 'Failed to fetch raw debug data',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
+    }
+  });
+
   // Helper function to get human-readable labels
   function getMetricLabel(concept: string): string {
     const labelMap: Record<string, string> = {
@@ -251,23 +421,23 @@ async function createApp() {
         dbStatus = 'error';
       }
 
-      // Check Finnhub connection
-      let finnhubStatus = 'unknown';
+      // Check FinScope metrics service
+      let finScopeStatus = 'unknown';
       try {
-        finnhubStatus = finnhubHealthy ? 'healthy' : 'degraded';
+        finScopeStatus = servicesHealthy ? 'healthy' : 'degraded';
       } catch (error) {
-        finnhubStatus = 'error';
+        finScopeStatus = 'error';
       }
 
       const health = {
-        status: dbStatus === 'healthy' && finnhubStatus !== 'error' ? 'ok' : 'degraded',
+        status: dbStatus === 'healthy' && finScopeStatus !== 'error' ? 'ok' : 'degraded',
         timestamp: new Date().toISOString(),
         services: {
           database: dbStatus,
-          finnhub: finnhubStatus,
+          finScopeMetrics: finScopeStatus,
           cache: 'memory',
         },
-        version: '1.0.0',
+        version: '1.1.0',
       };
 
       const statusCode = health.status === 'ok' ? 200 : 503;
