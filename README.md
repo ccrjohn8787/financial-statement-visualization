@@ -27,7 +27,7 @@ FinScope is a next-generation financial analysis platform that bridges the gap b
 **AI-First Technology Stack:**
 - **Primary Data**: Finnhub API for comprehensive financial metrics
 - **Supplemental Data**: SEC EDGAR API for narrative analysis and missing metrics
-- **AI/LLM**: OpenAI GPT-4 or Claude 3.5 Sonnet for financial intelligence
+- **AI/LLM**: Multi-provider strategy - Groq (primary), Mistral AI (scaling), OpenAI/Claude (premium)
 - **Database**: PostgreSQL with LLM analysis caching tables
 - **Caching**: Redis with aggressive LLM response caching (24h TTL)
 - **Charts**: Recharts for historical trends and comparative visualization
