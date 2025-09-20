@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinScope Redesign Mockup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-primary: #0A0B0D;
+            --bg-secondary: #141518;
+            --bg-tertiary: #1C1D21;
+            --text-primary: #E4E4E7;
+            --text-secondary: #9CA3AF;
+            --text-tertiary: #6B7280;
+            --accent-green: #10B981;
+            --accent-red: #EF4444;
+            --accent-yellow: #F59E0B;
+            --accent-blue: #3B82F6;
+            --border: #2A2B2F;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background: rgba(20, 21, 24, 0.95);
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-right: 32px;
+        }
+        
+        .company-selector {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            max-width: 400px;
+        }
+        
+        .company-dropdown {
+            flex: 1;
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .company-dropdown:hover {
+            border-color: var(--accent-blue);
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .header-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .header-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--text-primary);
+        }
+        
+        /* Hero Section */
+        .hero-section {
+            padding: 32px 0;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 32px;
+            align-items: center;
+        }
+        
+        .health-gauge-container {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        
+        .gauge-wrapper {
+            position: relative;
+            width: 200px;
+            height: 100px;
+            margin: 0 auto 16px;
+        }
+        
+        .gauge-svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .health-score-value {
+            font-size: 48px;
+            font-weight: 700;
+            font-family: 'SF Mono', 'Monaco', monospace;
+            background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        
+        .health-score-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        
+        .health-score-description {
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+        
+        .executive-summary {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 24px 32px;
+            border: 1px solid var(--border);
+        }
+        
+        .summary-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .summary-icon {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+            border-radius: 4px;
+        }
+        
+        .summary-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+        }
+        
+        .summary-content {
+            font-size: 18px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+        
+        .summary-highlight {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+        
+        .summary-warning {
+            color: var(--accent-yellow);
+            font-weight: 600;
+        }
+        
+        .summary-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .tag {
+            padding: 4px 12px;
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+        
+        .tag.positive {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .tag.warning {
+            border-color: var(--accent-yellow);
+            color: var(--accent-yellow);
+            background: rgba(245, 158, 11, 0.1);
+        }
+        
+        /* Metrics Grid */
+        .metrics-section {
+            padding: 32px 0;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+        
+        .metric-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+        }
+        
+        .metric-badge {
+            padding: 2px 8px;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-green);
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .metric-badge.negative {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+        }
+        
+        .metric-value-row {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            font-family: 'SF Mono', 'Monaco', monospace;
+        }
+        
+        .metric-change {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .metric-change.positive {
+            color: var(--accent-green);
+        }
+        
+        .metric-change.negative {
+            color: var(--accent-red);
+        }
+        
+        .metric-sparkline {
+            height: 60px;
+            margin-bottom: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 8px;
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+        }
+        
+        .spark-bar {
+            flex: 1;
+            background: var(--accent-blue);
+            border-radius: 2px;
+            opacity: 0.6;
+        }
+        
+        .spark-bar.current {
+            background: var(--accent-green);
+            opacity: 1;
+        }
+        
+        .metric-context {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            line-height: 1.5;
+        }
+        
+        /* Insights Section */
+        .insights-section {
+            padding: 32px 0;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .view-toggle {
+            display: flex;
+            gap: 8px;
+            background: var(--bg-tertiary);
+            padding: 4px;
+            border-radius: 8px;
+        }
+        
+        .toggle-btn {
+            padding: 6px 16px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        
+        .toggle-btn.active {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        
+        .insight-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid var(--accent-green);
+        }
+        
+        .insight-card.warning {
+            border-left-color: var(--accent-yellow);
+        }
+        
+        .insight-card.risk {
+            border-left-color: var(--accent-red);
+        }
+        
+        .insight-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .insight-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        .insight-icon.positive {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+        }
+        
+        .insight-icon.warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-yellow);
+        }
+        
+        .insight-content {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        /* Comparison View */
+        .comparison-section {
+            padding: 32px 0;
+        }
+        
+        .comparison-table {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        
+        .comparison-header {
+            display: grid;
+            grid-template-columns: 200px repeat(2, 1fr);
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .comparison-cell {
+            padding: 16px;
+            font-size: 14px;
+        }
+        
+        .comparison-cell.metric-name {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .comparison-row {
+            display: grid;
+            grid-template-columns: 200px repeat(2, 1fr);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .comparison-row:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .value-with-bar {
+            position: relative;
+        }
+        
+        .value-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.1));
+            z-index: 0;
+        }
+        
+        .value-text {
+            position: relative;
+            z-index: 1;
+            font-family: 'SF Mono', monospace;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">FinScope</div>
+                <div class="company-selector">
+                    <div class="company-dropdown">
+                        <span>Apple Inc. (AAPL)</span>
+                        <span style="color: var(--text-tertiary);">▼</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="header-btn">Export</button>
+                    <button class="header-btn">Compare</button>
+                    <button class="header-btn">Settings</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="health-gauge-container">
+                <div class="gauge-wrapper">
+                    <svg class="gauge-svg" viewBox="0 0 200 100">
+                        <!-- Background arc -->
+                        <path d="M 10 90 A 80 80 0 0 1 190 90" stroke="#2A2B2F" stroke-width="12" fill="none" stroke-linecap="round"/>
+                        <!-- Gradient definition -->
+                        <defs>
+                            <linearGradient id="gauge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#EF4444" />
+                                <stop offset="50%" style="stop-color:#F59E0B" />
+                                <stop offset="100%" style="stop-color:#10B981" />
+                            </linearGradient>
+                        </defs>
+                        <!-- Value arc -->
+                        <path d="M 10 90 A 80 80 0 0 1 150 50" stroke="url(#gauge-gradient)" stroke-width="12" fill="none" stroke-linecap="round"/>
+                        <!-- Needle -->
+                        <line x1="100" y1="90" x2="150" y2="50" stroke="#E4E4E7" stroke-width="3" stroke-linecap="round"/>
+                        <circle cx="100" cy="90" r="6" fill="#E4E4E7"/>
+                    </svg>
+                </div>
+                <div class="health-score-label">Financial Health</div>
+                <div class="health-score-value">84</div>
+                <div class="health-score-description">Strong fundamentals</div>
+            </div>
+            
+            <div class="executive-summary">
+                <div class="summary-header">
+                    <div class="summary-icon"></div>
+                    <div class="summary-title">Executive Summary</div>
+                </div>
+                <div class="summary-content">
+                    Apple shows <span class="summary-highlight">exceptional profitability</span> with 26.3% net margins and $99.8B in free cash flow. 
+                    Main concern is <span class="summary-warning">slowing growth</span> at 4.9% YoY, below tech sector average. 
+                    The company maintains fortress-like balance sheet with minimal debt risk.
+                </div>
+                <div class="summary-tags">
+                    <div class="tag positive">Strong Moat</div>
+                    <div class="tag positive">Cash Rich</div>
+                    <div class="tag warning">Growth Concerns</div>
+                    <div class="tag">Premium Valuation</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Metrics Grid -->
+        <section class="metrics-section">
+            <div class="metrics-grid">
+                <!-- Profitability Card -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-label">Net Margin</div>
+                        <div class="metric-badge">TOP 5%</div>
+                    </div>
+                    <div class="metric-value-row">
+                        <div class="metric-value">26.3%</div>
+                        <div class="metric-change positive">↑ 2.1%</div>
+                    </div>
+                    <div class="metric-sparkline">
+                        <div class="spark-bar" style="height: 70%;"></div>
+                        <div class="spark-bar" style="height: 75%;"></div>
+                        <div class="spark-bar" style="height: 72%;"></div>
+                        <div class="spark-bar" style="height: 78%;"></div>
+                        <div class="spark-bar" style="height: 80%;"></div>
+                        <div class="spark-bar" style="height: 85%;"></div>
+                        <div class="spark-bar" style="height: 88%;"></div>
+                        <div class="spark-bar current" style="height: 92%;"></div>
+                    </div>
+                    <div class="metric-context">
+                        Keeps $26.30 of every $100 in revenue. Industry median: $8.20
+                    </div>
+                </div>
+
+                <!-- Growth Card -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-label">Revenue Growth</div>
+                        <div class="metric-badge negative">BELOW AVG</div>
+                    </div>
+                    <div class="metric-value-row">
+                        <div class="metric-value">4.9%</div>
+                        <div class="metric-change negative">↓ 3.2%</div>
+                    </div>
+                    <div class="metric-sparkline">
+                        <div class="spark-bar" style="height: 80%;"></div>
+                        <div class="spark-bar" style="height: 75%;"></div>
+                        <div class="spark-bar" style="height: 70%;"></div>
+                        <div class="spark-bar" style="height: 65%;"></div>
+                        <div class="spark-bar" style="height: 60%;"></div>
+                        <div class="spark-bar" style="height: 55%;"></div>
+                        <div class="spark-bar" style="height: 50%;"></div>
+                        <div class="spark-bar current" style="height: 45%; background: var(--accent-yellow);"></div>
+                    </div>
+                    <div class="metric-context">
+                        Growing slower than inflation (5.5%). Tech sector avg: 8.1%
+                    </div>
+                </div>
+
+                <!-- Cash Flow Card -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-label">Free Cash Flow</div>
+                        <div class="metric-badge">EXCELLENT</div>
+                    </div>
+                    <div class="metric-value-row">
+                        <div class="metric-value">$99.8B</div>
+                        <div class="metric-change positive">↑ 15%</div>
+                    </div>
+                    <div class="metric-sparkline">
+                        <div class="spark-bar" style="height: 60%;"></div>
+                        <div class="spark-bar" style="height: 65%;"></div>
+                        <div class="spark-bar" style="height: 70%;"></div>
+                        <div class="spark-bar" style="height: 72%;"></div>
+                        <div class="spark-bar" style="height: 78%;"></div>
+                        <div class="spark-bar" style="height: 82%;"></div>
+                        <div class="spark-bar" style="height: 88%;"></div>
+                        <div class="spark-bar current" style="height: 95%;"></div>
+                    </div>
+                    <div class="metric-context">
+                        Enough to buy Netflix every year. 25.8% FCF margin.
+                    </div>
+                </div>
+
+                <!-- Valuation Card -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-label">P/E Ratio</div>
+                        <div class="metric-badge negative">EXPENSIVE</div>
+                    </div>
+                    <div class="metric-value-row">
+                        <div class="metric-value">31.2x</div>
+                        <div class="metric-change negative">↑ 25%</div>
+                    </div>
+                    <div class="metric-sparkline">
+                        <div class="spark-bar" style="height: 50%;"></div>
+                        <div class="spark-bar" style="height: 55%;"></div>
+                        <div class="spark-bar" style="height: 60%;"></div>
+                        <div class="spark-bar" style="height: 58%;"></div>
+                        <div class="spark-bar" style="height: 65%;"></div>
+                        <div class="spark-bar" style="height: 70%;"></div>
+                        <div class="spark-bar" style="height: 80%;"></div>
+                        <div class="spark-bar current" style="height: 90%; background: var(--accent-yellow);"></div>
+                    </div>
+                    <div class="metric-context">
+                        Trading at premium. 5-year average: 22x. Sector: 24.5x
+                    </div>
+                </div>
+
+                <!-- ROE Card -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-label">Return on Equity</div>
+                        <div class="metric-badge">EXCEPTIONAL</div>
+                    </div>
+                    <div class="metric-value-row">
+                        <div class="metric-value">147%</div>
+                        <div class="metric-change positive">↑ 12%</div>
+                    </div>
+                    <div class="metric-sparkline">
+                        <div class="spark-bar" style="height: 70%;"></div>
+                        <div class="spark-bar" style="height: 73%;"></div>
+                        <div class="spark-bar" style="height: 76%;"></div>
+                        <div class="spark-bar" style="height: 80%;"></div>
+                        <div class="spark-bar" style="height: 83%;"></div>
+                        <div class="spark-bar" style="height: 87%;"></div>
+                        <div class="spark-bar" style="height: 90%;"></div>
+                        <div class="spark-bar current" style="height: 95%;"></div>
+                    </div>
+                    <div class="metric-context">
+                        Generates $1.47 for every $1 of shareholder equity
+                    </div>
+                </div>
+
+                <!-- Debt Ratio Card -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-label">Debt to Equity</div>
+                        <div class="metric-badge">SAFE</div>
+                    </div>
+                    <div class="metric-value-row">
+                        <div class="metric-value">1.95x</div>
+                        <div class="metric-change positive">↓ 0.3x</div>
+                    </div>
+                    <div class="metric-sparkline">
+                        <div class="spark-bar" style="height: 60%;"></div>
+                        <div class="spark-bar" style="height: 58%;"></div>
+                        <div class="spark-bar" style="height: 55%;"></div>
+                        <div class="spark-bar" style="height: 52%;"></div>
+                        <div class="spark-bar" style="height: 50%;"></div>
+                        <div class="spark-bar" style="height: 48%;"></div>
+                        <div class="spark-bar" style="height: 45%;"></div>
+                        <div class="spark-bar current" style="height: 42%;"></div>
+                    </div>
+                    <div class="metric-context">
+                        Can pay off all debt with 2 years of cash flow
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Insights -->
+        <section class="insights-section">
+            <div class="section-header">
+                <h2 class="section-title">Key Insights</h2>
+                <div class="view-toggle">
+                    <button class="toggle-btn active">Summary</button>
+                    <button class="toggle-btn">Detailed</button>
+                </div>
+            </div>
+            
+            <div class="insights-grid">
+                <div class="insight-card">
+                    <div class="insight-title">
+                        <span class="insight-icon positive">✓</span>
+                        Pricing Power Intact
+                    </div>
+                    <div class="insight-content">
+                        Gross margin improved to 45.2% (up from 43.1% YoY). This indicates Apple can still raise prices and customers will pay - similar to luxury brands like Rolex where brand value exceeds production cost.
+                    </div>
+                </div>
+                
+                <div class="insight-card warning">
+                    <div class="insight-title">
+                        <span class="insight-icon warning">!</span>
+                        China Revenue Declining
+                    </div>
+                    <div class="insight-content">
+                        Greater China revenue down 8% YoY ($20.8B → $19.1B). This is Apple's second-largest market showing weakness for third consecutive quarter. Represents 16% of total revenue at risk.
+                    </div>
+                </div>
+                
+                <div class="insight-card">
+                    <div class="insight-title">
+                        <span class="insight-icon positive">✓</span>
+                        Services Revenue Boom
+                    </div>
+                    <div class="insight-content">
+                        Services hit record $22.3B (up 12% YoY) with 70% margins. This high-margin recurring revenue stream now represents 20% of total revenue, providing stability and predictability.
+                    </div>
+                </div>
+                
+                <div class="insight-card risk">
+                    <div class="insight-title">
+                        <span class="insight-icon warning">⚠</span>
+                        Valuation Stretched
+                    </div>
+                    <div class="insight-content">
+                        Trading at 31.2x earnings vs 5-year average of 22x. Current valuation implies 15% annual growth but company delivering only 5%. May limit upside potential in near term.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Comparison View -->
+        <section class="comparison-section">
+            <div class="section-header">
+                <h2 class="section-title">Peer Comparison</h2>
+            </div>
+            
+            <div class="comparison-table">
+                <div class="comparison-header">
+                    <div class="comparison-cell metric-name">Metric</div>
+                    <div class="comparison-cell">AAPL</div>
+                    <div class="comparison-cell">MSFT</div>
+                </div>
+                
+                <div class="comparison-row">
+                    <div class="comparison-cell metric-name">Revenue Growth</div>
+                    <div class="comparison-cell value-with-bar">
+                        <div class="value-bar" style="width: 30%;"></div>
+                        <span class="value-text">4.9%</span>
+                    </div>
+                    <div class="comparison-cell value-with-bar">
+                        <div class="value-bar" style="width: 70%;"></div>
+                        <span class="value-text" style="color: var(--accent-green);">12.4%</span>
+                    </div>
+                </div>
+                
+                <div class="comparison-row">
+                    <div class="comparison-cell metric-name">Net Margin</div>
+                    <div class="comparison-cell value-with-bar">
+                        <div class="value-bar" style="width: 80%;"></div>
+                        <span class="value-text" style="color: var(--accent-green);">26.3%</span>
+                    </div>
+                    <div class="comparison-cell value-with-bar">
+                        <div class="value-bar" style="width: 70%;"></div>
+                        <span class="value-text">22.1%</span>
+                    </div>
+                </div>
+                
+                <div class="comparison-row">
+                    <div class="comparison-cell metric-name">P/E Ratio</div>
+                    <div class="comparison-cell value-with-bar">
+                        <div class="value-bar" style="width: 85%; background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.1));"></div>
+                        <span class="value-text" style="color: var(--accent-yellow);">31.2x</span>
+                    </div>
+                    <div class="comparison-cell value-with-bar">
+                        <div class="value-bar" style="width: 75%; background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.1));"></div>
+                        <span class="value-text">28.5x</span>
+                    </div>
+                </div>
+                
+                <div class="comparison-row">
+                    <div class="comparison-cell metric-name">Free Cash Flow</div>
+                    <div class="comparison-cell value-with-bar">
+                        <div class="value-bar" style="width: 95%;"></div>
+                        <span class="value-text" style="color: var(--accent-green);">$99.8B</span>
+                    </div>
+                    <div class="comparison-cell value-with-bar">
+                        <div class="value-bar" style="width: 75%;"></div>
+                        <span class="value-text">$78.2B</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

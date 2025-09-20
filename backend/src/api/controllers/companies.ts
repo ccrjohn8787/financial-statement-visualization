@@ -34,7 +34,7 @@ export class CompaniesController {
             { cik: { contains: q.padStart(10, '0') } },
           ],
         },
-        take: limit,
+        take: parseInt(limit, 10),
         orderBy: [
           // Prioritize exact ticker matches
           { ticker: 'asc' },
